@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎱 LuckyBall - 행운의 공 추첨기</title>
+    <style>
+        :root {
+            /* Cute Dark Mode Palette */
+            --bg-dark: #121212;
+            --bg-panel: #1e1e24;
+            --bg-drum: rgba(255, 255, 255, 0.05);
+            --text-main: #e0e0e0;
+            --text-muted: #888888;
+            --accent-cyan: #40e0d0;
+            /* Bright Teal/Cyan */
+            --accent-pink: #ff66b2;
+            /* Bright Pink */
+            --accent-gold: #ffd700;
+            /* Bright Gold */
+
+            /* Gradients */
+            --btn-gradient: linear-gradient(135deg, #bd93f9, #ff79c6);
+            --btn-hover: linear-gradient(135deg, #d6acff, #ff92d0);
+            --btn-secondary: linear-gradient(135deg, #6272a4, #8be9fd);
+            --btn-danger: #ff5555;
+
+            /* Glows */
+            --glow-cyan: 0 0 10px rgba(64, 224, 208, 0.8), 0 0 20px rgba(64, 224, 208, 0.4);
+            --glow-gold: 0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5);
+
+            /* Layout */
+            --border-radius: 24px;
+            /* More rounded */
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0%, #2a2a35 0%, #121212 60%);
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg) 5%;
+            background: rgba(30, 30, 36, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: var(--glow-cyan);
+            margin-bottom: 4px;
+        }
+
+        h1 .ball-emoji {
+            display: inline-block;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .sound-toggle {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .sound-toggle:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .sound-toggle.off {
+            opacity: 0.5;
+            color: var(--text-muted);
+            border-color: transparent;
+            box-shadow: none;
+        }
+
+        /* --- Main Layout --- */
+        main {
+            display: flex;
+            flex: 1;
+            padding: var(--spacing-lg) 5%;
+            gap: var(--spacing-lg);
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            main {
+                flex-direction: column;
+            }
+
+            #setup-panel {
+                flex: none;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: var(--spacing-md) 5%;
+            }
+
+            .title {
+                font-size: 1.5rem;
+            }
+
+            .subtitle {
+                font-size: 0.8rem;
+            }
+
+            main {
+                padding: var(--spacing-md) 5%;
+                gap: var(--spacing-md);
+            }
+
+            .panel {
+                padding: var(--spacing-md);
+            }
+
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .modal-title {
+                font-size: 1.8rem;
+                margin-bottom: 15px;
+            }
+
+            .extracted-ball {
+                width: 120px;
+                height: 120px;
+            }
+
+            .number-inputs {
+                flex-direction: column;
+                gap: 5px;
+                align-items: stretch;
+            }
+
+            .number-inputs span {
+                text-align: center;
+                display: none;
+            }
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        /* --- Setup Panel (Left) --- */
+        #setup-panel {
+            flex: 0 0 350px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+            height: fit-content;
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 30px;
+            padding: 4px;
+            position: relative;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px 0;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 26px;
+            transition: all 0.3s;
+            z-index: 1;
+        }
+
+        .mode-btn.active {
+            color: #fff;
+        }
+
+        .mode-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: var(--btn-secondary);
+            border-radius: 26px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 0;
+        }
+
+        .mode-toggle[data-mode="number"] .mode-slider {
+            transform: translateX(100%);
+        }
+
+        /* Form Groups */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .form-group .sub-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .number-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .number-inputs span {
+            color: var(--text-muted);
+        }
+
+        /* Switch Toggle UI */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .switch-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--accent-cyan);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Number Control (Winner Count) */
+        .number-control {
+            display: flex;
+            align-items: center;
+        }
+
+        .number-control button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .number-control button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .number-control input {
+            text-align: center;
+            border: none;
+            background: transparent;
+            width: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        .number-control input::-webkit-outer-spin-button,
+        .number-control input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+
+        /* Presets Area */
+        .preset-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .preset-area select {
+            flex: 1;
+        }
+
+        .btn-small {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Start Button */
+        .btn-start {
+            background: var(--btn-gradient);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(247, 37, 133, 0.4);
+        }
+
+        .btn-start:active {
+            transform: translateY(1px);
+        }
+
+        .btn-start:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Tags Preview */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        /* --- Main Stage (Right Canvas Area) --- */
+        #main-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .drum-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1/1;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #drumCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            /* Visual Drum Boundary */
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 240, 255, 0.1);
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.2) 100%);
+            z-index: 10;
+        }
+
+        /* Confetti Layer */
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* Animation Overlay (For Extracted Ball) */
+        #extract-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            transition: background 0.5s;
+        }
+
+        #extract-overlay.active {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .extracted-ball {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            color: #000;
+            box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.3), var(--glow-gold);
+            border: 4px solid var(--accent-gold);
+            opacity: 0;
+            transform: translateY(100px) scale(0.5);
+            /* Start from bottom and small */
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            line-height: 1.2;
+            padding: 10px;
+            overflow: hidden;
+            word-break: keep-all;
+        }
+
+        .extracted-ball.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            /* Pop up to center */
+        }
+
+        /* Winner Slots */
+        #winner-slots-container {
+            width: 100%;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--border-radius);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #winner-slots-container h3 {
+            text-align: center;
+            color: var(--accent-gold);
+            font-weight: border;
+            letter-spacing: 2px;
+        }
+
+        .slots-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .slot {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .slot.filled {
+            border-style: solid;
+            color: #000;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: slotPop 0.4s ease-out;
+        }
+
+        .slot-order {
+            position: absolute;
+            top: -20px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        @keyframes slotPop {
+            0% {
+                transform: scale(0.8);
+            }
+
+            50% {
+                transform: scale(1.1);
+                box-shadow: var(--glow-gold);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* --- Modal Overlays --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .result-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .result-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* --- Home Screen --- */
+        #home-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 200px);
+            width: 100%;
+            padding: var(--spacing-lg);
+            z-index: 10;
+        }
+
+        .home-title {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #fff;
+            text-shadow: var(--glow-cyan);
+        }
+
+        .home-cards {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1000px;
+        }
+
+        .mode-card {
+            background: var(--bg-panel);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 300px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), var(--glow-cyan);
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .mode-card:hover::before {
+            left: 200%;
+        }
+
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+
+        .mode-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .mode-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .setting-section-title {
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+            color: var(--accent-gold);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 4px;
+        }
+
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .order-table th,
+        .order-table td {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            text-align: center;
+        }
+
+        .order-table th {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-cyan);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-redraw {
+            background: linear-gradient(135deg, #06d6a0, #00b4d8);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-redraw:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(6, 214, 160, 0.3);
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* History Panel */
+        footer {
+            padding: var(--spacing-lg) 5%;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: auto;
+        }
+
+        .history-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .history-title {
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .history-list {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .history-time {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Utils */
+        .hidden {
+            display: none !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Preset Input Modal */
+        #preset-modal {
+            z-index: 1050;
+        }
+
+        #preset-modal input {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo-container">
+            <h1 class="title"><span class="ball-emoji">🎱</span> LuckyBall</h1>
+            <span class="subtitle">행운의 공이 당신을 선택합니다!</span>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <button id="btnHome" class="sound-toggle" title="홈 화면으로" style="display:none; font-size:1.2rem;">
+                🏠
+            </button>
+            <button id="soundToggle" class="sound-toggle" title="사운드 켜기/끄기">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    <!-- Home Screen -->
+    <section id="home-screen">
+        <h2 class="home-title">어떤 방식으로 진행할까요?</h2>
+        <div class="home-cards">
+            <div class="mode-card" id="card-winner">
+                <div class="mode-icon">🏆</div>
+                <div class="mode-title">당첨자 뽑기</div>
+                <div class="mode-desc">한 명씩 돌려 당첨자를 뽑습니다.</div>
+            </div>
+            <div class="mode-card" id="card-order">
+                <div class="mode-icon">📊</div>
+                <div class="mode-title">순서 정하기</div>
+                <div class="mode-desc">모두의 순번을 한 번에 정합니다.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main App Layout -->
+    <main id="app-screen" class="hidden">
+        <!-- Setup Panel -->
+        <section id="setup-panel" class="panel">
+            <div class="setting-section-title" id="modeConfigTitle">명단 입력 방식</div>
+            <!-- Mode Toggle -->
+            <div class="mode-toggle" data-mode="name" id="modeSwitch">
+                <div class="mode-slider"></div>
+                <button class="mode-btn active" data-target="name">이름 모드</button>
+                <button class="mode-btn" data-target="number">숫자 모드</button>
+            </div>
+
+            <!-- Name Mode Sections -->
+            <div id="section-name" class="form-group">
+                <label for="nameInput">참가자 입력</label>
+                <span class="sub-label">쉼표(,) 또는 줄바꿈으로 구분하여 입력하세요.</span>
+                <textarea id="nameInput" placeholder="홍길동, 김철수, 이영희, ..."></textarea>
+
+                <div class="preset-area">
+                    <select id="presetSelect">
+                        <option value="">프리셋을 선택하세요...</option>
+                    </select>
+                    <button id="btnSavePreset" class="btn-small">저장 💾</button>
+                    <button id="btnDeletePreset" class="btn-small" style="color:var(--btn-danger);">삭제 ✖</button>
+                </div>
+
+                <div class="sub-label">총 <span id="participantCount">0</span>명 참가</div>
+                <div class="tags-container" id="tagsPreview"></div>
+            </div>
+
+            <!-- Number Mode Sections -->
+            <div id="section-number" class="form-group hidden">
+                <label>숫자 범위 입력</label>
+                <span class="sub-label">최대 200개까지 생성 가능합니다.</span>
+                <div class="number-inputs">
+                    <input type="number" id="numStart" value="1" min="1" max="999">
+                    <span>~</span>
+                    <input type="number" id="numEnd" value="45" min="2" max="1000">
+                </div>
+                <div class="sub-label" id="numberSummary">1 ~ 45 (총 45개)</div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin: 5px 0;">
+
+            <div id="winnerSettingsSection">
+                <div class="setting-section-title">추첨 설정</div>
+                <!-- Common Settings -->
+                <div class="form-group">
+                    <label>당첨자 수</label>
+                    <div class="number-control">
+                        <button id="btnWinnersMinus">-</button>
+                        <input type="number" id="winnersCount" value="1" min="1">
+                        <button id="btnWinnersPlus">+</button>
+                    </div>
+                </div>
+
+                <div class="form-group switch-container" id="excludeToggleContainer">
+                    <div class="switch-text">
+                        <label>기 당첨자 제외</label>
+                        <span class="sub-label" id="excludeDesc">같은 사람이 중복 당첨되지 않습니다.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="excludeWinners" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <button id="btnStart" class="btn-start">추첨 시작!</button>
+        </section>
+
+        <!-- Main Stage -->
+        <section id="main-stage">
+            <div class="drum-container">
+                <canvas id="drumCanvas"></canvas>
+                <div id="extract-overlay">
+                    <div id="extractedBall" class="extracted-ball">?</div>
+                </div>
+            </div>
+
+            <!-- Winner Slots Below Drum -->
+            <div id="winner-slots-container">
+                <h3>WINNERS</h3>
+                <div class="slots-row" id="slotsRow">
+                    <!-- Slots dynamically created -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- History Footer -->
+    <footer>
+        <div class="history-container">
+            <div class="history-title">추첨 히스토리</div>
+            <div class="history-list" id="historyList">
+                <span style="color:var(--text-muted); font-size:0.8rem;">아직 추첨 기록이 없습니다.</span>
+            </div>
+            <div style="text-align: center; margin-top: 30px; font-size: 0.8rem; color: var(--text-muted);">
+                Made with LuckyBall 🎱
+            </div>
+        </div>
+    </footer>
+
+    <!-- Result Modal (End of drawing) -->
+    <div id="resultModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">🎉 추첨 완료! 🎉</h2>
+            <div class="result-list" id="finalResultList">
+                <!-- Result items generated here -->
+            </div>
+
+            <button id="btnCopyResult" class="btn-small">결과 복사 📋</button>
+
+            <div class="modal-actions">
+                <button id="btnRedraw" class="btn-redraw">같은 참가자로 재추첨 🔄</button>
+                <button id="btnReset" class="btn-reset">처음으로 돌아가기 🏠</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preset Name Prompt Modal -->
+    <div id="preset-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; padding: 30px;">
+            <h3>프리셋 저장</h3>
+            <p style="color:var(--text-muted); margin-top:10px;">저장할 프리셋 이름을 입력하세요.</p>
+            <input type="text" id="presetNameInput" placeholder="예: 개발팀, 이벤트 당첨자">
+            <div class="modal-actions">
+                <button id="btnCancelPreset" class="btn-reset">취소</button>
+                <button id="btnConfirmPreset" class="btn-redraw">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti Layer -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <script>
+        // --- Application State ---
+        const appState = {
+            mode: 'name', // 'name' | 'number'
+            participants: [], // Parsing result [{id, text, color}, ...]
+
+            // Name Mode
+            nameInput: '',
+
+            // Number Mode
+            numberRange: { start: 1, end: 45 },
+
+            // Settings
+            drawType: 'winner', // 'winner' | 'order'
+            winnerCount: 1,
+            excludeWinners: true,
+
+            // Drum Physics State
+            balls: [], // Active balls in the drum
+            isAnimating: false,
+            phase: 'setup', // 'setup' | 'mixing' | 'extracting' | 'result'
+
+            // Drawing state
+            currentRound: 0,
+            winners: [], // [{text, color, order}]
+
+            // History
+            history: [], // [{ timestamp, winners }]
+
+            // Presets (loaded from localStorage)
+            presets: []
+        };
+
+        // DOM Elements
+        const DOM = {
+            homeScreen: document.getElementById('home-screen'),
+            appScreen: document.getElementById('app-screen'),
+            cardWinner: document.getElementById('card-winner'),
+            cardOrder: document.getElementById('card-order'),
+            btnHome: document.getElementById('btnHome'),
+
+            modeSwitch: document.getElementById('modeSwitch'),
+            modeBtns: document.querySelectorAll('.mode-btn'),
+            sectionName: document.getElementById('section-name'),
+            sectionNumber: document.getElementById('section-number'),
+
+            nameInput: document.getElementById('nameInput'),
+            participantCount: document.getElementById('participantCount'),
+            tagsPreview: document.getElementById('tagsPreview'),
+
+            presetSelect: document.getElementById('presetSelect'),
+            btnSavePreset: document.getElementById('btnSavePreset'),
+            btnDeletePreset: document.getElementById('btnDeletePreset'),
+            presetModal: document.getElementById('preset-modal'),
+            presetNameInput: document.getElementById('presetNameInput'),
+            btnCancelPreset: document.getElementById('btnCancelPreset'),
+            btnConfirmPreset: document.getElementById('btnConfirmPreset'),
+
+            numStart: document.getElementById('numStart'),
+            numEnd: document.getElementById('numEnd'),
+            numberSummary: document.getElementById('numberSummary'),
+
+            winnerSettingsSection: document.getElementById('winnerSettingsSection'),
+
+            winnersCount: document.getElementById('winnersCount'),
+            btnWinnersMinus: document.getElementById('btnWinnersMinus'),
+            btnWinnersPlus: document.getElementById('btnWinnersPlus'),
+            excludeToggleContainer: document.getElementById('excludeToggleContainer'),
+            excludeWinners: document.getElementById('excludeWinners'),
+            excludeDesc: document.getElementById('excludeDesc'),
+
+            btnStart: document.getElementById('btnStart'),
+            soundToggle: document.getElementById('soundToggle'),
+            slotsRow: document.getElementById('slotsRow')
+        };
+
+        let isSoundOn = true;
+
+        // Bright Colorful Palette for Balls
+        const BALL_COLORS = [
+            '#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93',
+            '#F15BB5', '#00F5D4', '#00BBF9', '#FEE440', '#9B5DE5'
+        ];
+
+        // --- Audio System ---
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!isSoundOn || !audioCtx) return;
+
+            const t = audioCtx.currentTime;
+
+            if (type === 'tick') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, t);
+                osc.frequency.exponentialRampToValueAtTime(300, t + 0.05);
+                gain.gain.setValueAtTime(0.3, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+                osc.start(t);
+                osc.stop(t + 0.05);
+            } else if (type === 'pop') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, t);
+                osc.frequency.exponentialRampToValueAtTime(50, t + 0.1);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(t);
+                osc.stop(t + 0.1);
+            } else if (type === 'fanfare') {
+                const notes = [440, 554, 659, 880];
+                notes.forEach((freq, i) => {
+                    const st = t + i * 0.1;
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = 'square';
+                    o.frequency.value = freq;
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    g.gain.setValueAtTime(0.1, st);
+                    g.gain.linearRampToValueAtTime(0, st + 0.3);
+                    o.start(st);
+                    o.stop(st + 0.3);
+                });
+            } else if (type === 'grand') {
+                const notes = [
+                    { f: 440, d: 0.15 }, { f: 554, d: 0.15 }, { f: 659, d: 0.15 },
+                    { f: 880, d: 0.4 }, { f: 659, d: 0.2 }, { f: 880, d: 0.6 }
+                ];
+                let timeOffset = 0;
+                notes.forEach(note => {
+                    const st = t + timeOffset;
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = 'triangle';
+                    o.frequency.value = note.f;
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    g.gain.setValueAtTime(0.2, st);
+                    g.gain.linearRampToValueAtTime(0, st + note.d);
+                    o.start(st);
+                    o.stop(st + note.d);
+                    timeOffset += note.d;
+                });
+            }
+        }
+
+        // --- Canvas & Physics System ---
+        const canvas = document.getElementById('drumCanvas');
+        const ctx = canvas.getContext('2d');
+        let dpr = window.devicePixelRatio || 1;
+        let drumRadius = 0;
+        let centerX = 0;
+        let centerY = 0;
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            // Handle element size 0 initially
+            if (rect.width === 0 || rect.height === 0) return;
+
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            drumRadius = Math.min(rect.width, rect.height) / 2 - 10;
+            centerX = rect.width / 2;
+            centerY = rect.height / 2;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        class Ball {
+            constructor(id, text, color, x, y, radius) {
+                this.id = id;
+                this.text = text;
+                this.color = color;
+                this.radius = radius;
+                this.mass = radius * radius;
+
+                this.x = x;
+                this.y = y;
+
+                // Random initial velocity
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 2 + 1;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+
+                this.isExtracted = false;
+            }
+
+            update(gravity, mixingForce = 0) {
+                if (this.isExtracted) return;
+
+                if (this.isShootingOut) {
+                    this.vy += gravity * 2; // fall back down
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    // Remove from screen when it falls below
+                    if (this.y > centerY * 2.5) {
+                        this.isExtracted = true;
+                    }
+                    return; // skip boundary
+                }
+
+                // Apply Gravity
+                this.vy += gravity;
+
+                // Apply Mixing Force
+                if (mixingForce > 0) {
+                    this.vx += (Math.random() - 0.5) * mixingForce;
+                    this.vy += (Math.random() - 0.5) * mixingForce;
+                }
+
+                // Max Speed limit
+                const speed = Math.hypot(this.vx, this.vy);
+                let maxSpeed = 30;
+                if (speed > maxSpeed) {
+                    this.vx = (this.vx / speed) * maxSpeed;
+                    this.vy = (this.vy / speed) * maxSpeed;
+                }
+
+                // Friction / Damping
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Boundary collision (Circle)
+                const dx = this.x - centerX;
+                const dy = this.y - centerY;
+                const dist = Math.hypot(dx, dy);
+
+                const boundaryDist = drumRadius - this.radius;
+
+                if (dist > boundaryDist) {
+                    // Normalize vector
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+
+                    // Move ball back inside
+                    this.x = centerX + nx * boundaryDist;
+                    this.y = centerY + ny * boundaryDist;
+
+                    // Reflect velocity
+                    const dotProduct = this.vx * nx + this.vy * ny;
+                    this.vx -= 2 * dotProduct * nx;
+                    this.vy -= 2 * dotProduct * ny;
+
+                    // Add some bounce loss
+                    this.vx *= 0.8;
+                    this.vy *= 0.8;
+                }
+            }
+
+            draw(ctx) {
+                if (this.isExtracted) return;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Shadow
+                ctx.beginPath();
+                ctx.arc(2, 5, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fill();
+
+                // Ball gradient
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                const grad = ctx.createRadialGradient(-this.radius * 0.3, -this.radius * 0.3, this.radius * 0.1, 0, 0, this.radius);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(0.2, this.color);
+                grad.addColorStop(1, '#000000');
+                ctx.fillStyle = grad;
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.stroke();
+
+                // Text Rendering with Wrapping
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                const lines = [];
+                let pText = this.text;
+                let fontSize = this.radius * 0.6;
+
+                // Simple Logic for Line Breaks and Font Size
+                if (pText.length > 5) {
+                    fontSize = this.radius * 0.35;
+                    // Try to split around the middle
+                    const mid = Math.floor(pText.length / 2);
+                    lines.push(pText.substring(0, mid));
+                    lines.push(pText.substring(mid));
+                } else if (pText.length > 3) {
+                    fontSize = this.radius * 0.45;
+                    lines.push(pText);
+                } else {
+                    lines.push(pText);
+                }
+
+                ctx.font = `bold ${fontSize}px Pretendard, sans-serif`;
+
+                // Draw lines
+                const lineSpacing = fontSize * 1.2;
+                const startY = -((lines.length - 1) * lineSpacing) / 2;
+
+                lines.forEach((line, index) => {
+                    ctx.fillText(line, 0, startY + (index * lineSpacing));
+                });
+
+                ctx.restore();
+            }
+        }
+
+        function resolveCollisions() {
+            for (let i = 0; i < appState.balls.length; i++) {
+                for (let j = i + 1; j < appState.balls.length; j++) {
+                    const b1 = appState.balls[i];
+                    const b2 = appState.balls[j];
+                    if (b1.isExtracted || b2.isExtracted) continue;
+
+                    const dx = b2.x - b1.x;
+                    const dy = b2.y - b1.y;
+                    const dist = Math.hypot(dx, dy);
+                    const minDist = b1.radius + b2.radius;
+
+                    if (dist < minDist) {
+                        // resolve overlap
+                        const overlap = (minDist - dist) / 2;
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+
+                        b1.x -= nx * overlap;
+                        b1.y -= ny * overlap;
+                        b2.x += nx * overlap;
+                        b2.y += ny * overlap;
+
+                        // 1D elastic collision
+                        const kx = b1.vx - b2.vx;
+                        const ky = b1.vy - b2.vy;
+
+                        const p = 2.0 * (nx * kx + ny * ky) / (b1.mass + b2.mass);
+                        const bounce = 0.9;
+
+                        b1.vx -= p * b2.mass * nx * bounce;
+                        b1.vy -= p * b2.mass * ny * bounce;
+                        b2.vx += p * b1.mass * nx * bounce;
+                        b2.vy += p * b1.mass * ny * bounce;
+
+                        // Sound on hard collision
+                        if (Math.abs(p) > 2) {
+                            playSound('pop');
+                        }
+                    }
+                }
+            }
+        }
+
+        // Loop Reference
+        let requestAnimId;
+
+        function renderLoop() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            let gravity = 0.05;
+            let mixingForce = 0;
+
+            if (appState.phase === 'mixing') {
+                mixingForce = 2.0;
+            } else if (appState.phase === 'extracting') {
+                gravity = 0.02;
+                mixingForce = 0.5;
+            }
+
+            // Drum interaction Tick
+            if (appState.phase === 'mixing' || appState.phase === 'extracting') {
+                if (Math.random() < 0.1) playSound('tick');
+            }
+
+            // Update & Draw Balls
+            appState.balls.forEach(b => b.update(gravity, mixingForce));
+            resolveCollisions();
+            appState.balls.forEach(b => b.draw(ctx));
+
+            // Draw Visual Drum overlay (optional)
+            // Drum border handled effectively in CSS, but can draw additional elements if desired
+
+            requestAnimId = requestAnimationFrame(renderLoop);
+        }
+
+        function populateBalls(participants) {
+            appState.balls = [];
+
+            // Calc radius based on count
+            let count = participants.length;
+            let radius = 40;
+            if (count > 20) radius = 30;
+            if (count > 50) radius = 20;
+            if (count > 100) radius = 15;
+            if (count > 150) radius = 12;
+
+            resizeCanvas(); // Ensure canvas is sized correctly before spawn
+
+            participants.forEach((p, idx) => {
+                // Initialize randomly within drum
+                const r = drumRadius * 0.8 * Math.sqrt(Math.random());
+                const theta = Math.random() * 2 * Math.PI;
+                const x = centerX + r * Math.cos(theta);
+                const y = centerY + r * Math.sin(theta);
+
+                appState.balls.push(new Ball(p.id, p.text, p.color, x, y, radius));
+            });
+
+            if (!appState.isAnimating) {
+                appState.isAnimating = true;
+                renderLoop();
+            }
+        }
+
+        function initApp() {
+            // Enable Audio on first user interaction
+            document.addEventListener('pointerdown', initAudio, { once: true });
+            document.addEventListener('keydown', initAudio, { once: true });
+
+            loadPresets();
+            setupEventListeners();
+            setupHomeScreen();
+            updateInputValidation();
+
+            // Start at Home
+            showHomeScreen();
+        }
+
+        function setupHomeScreen() {
+            DOM.cardWinner.addEventListener('click', () => {
+                startAppMode('winner');
+            });
+
+            DOM.cardOrder.addEventListener('click', () => {
+                startAppMode('order');
+            });
+
+            DOM.btnHome.addEventListener('click', () => {
+                if (appState.phase !== 'setup' && appState.phase !== 'result') {
+                    if (!confirm('추첨이 진행 중입니다. 홈으로 돌아가시겠습니까? 진행 내역은 초기화됩니다.')) return;
+                }
+                showHomeScreen();
+            });
+        }
+
+        function showHomeScreen() {
+            DOM.homeScreen.classList.remove('hidden');
+            DOM.appScreen.classList.add('hidden');
+            DOM.btnHome.style.display = 'none';
+            appState.phase = 'setup';
+            resetToInitial(); // Clear drum & winners
+        }
+
+        function startAppMode(type) {
+            appState.drawType = type;
+            DOM.homeScreen.classList.add('hidden');
+            DOM.appScreen.classList.remove('hidden');
+            DOM.btnHome.style.display = 'flex';
+
+            if (type === 'order') {
+                DOM.winnerSettingsSection.classList.add('hidden');
+                document.getElementById('winner-slots-container').style.display = 'none';
+            } else {
+                DOM.winnerSettingsSection.classList.remove('hidden');
+                document.getElementById('winner-slots-container').style.display = 'flex';
+            }
+
+            resizeCanvas(); // Important: Canvas was hidden (width 0) during home screen, layout changes need resize computation
+            populateBalls(appState.participants); // draw any initial balls based on inputs
+        }
+
+        function setupEventListeners() {
+            // Sound Toggle
+            DOM.soundToggle.addEventListener('click', () => {
+                isSoundOn = !isSoundOn;
+                DOM.soundToggle.classList.toggle('off', !isSoundOn);
+                DOM.soundToggle.textContent = isSoundOn ? '🔊' : '🔈';
+            });
+
+            // Mode Switching
+            DOM.modeBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (appState.phase !== 'setup') return;
+                    const targetMode = e.target.dataset.target;
+                    setMode(targetMode);
+                });
+            });
+
+            // Name Input
+            DOM.nameInput.addEventListener('input', updateInputValidation);
+
+            // Preset Events
+            DOM.btnSavePreset.addEventListener('click', () => {
+                if (!appState.nameInput.trim()) {
+                    alert('저장할 참가자를 먼저 입력해주세요.');
+                    return;
+                }
+                DOM.presetNameInput.value = '';
+                DOM.presetModal.classList.add('show');
+                DOM.presetNameInput.focus();
+            });
+
+            DOM.btnCancelPreset.addEventListener('click', () => {
+                DOM.presetModal.classList.remove('show');
+            });
+
+            DOM.btnConfirmPreset.addEventListener('click', () => {
+                const presetName = DOM.presetNameInput.value.trim();
+                if (!presetName) {
+                    alert('프리셋 이름을 입력해주세요.');
+                    return;
+                }
+                savePreset(presetName, appState.nameInput);
+                DOM.presetModal.classList.remove('show');
+            });
+
+            DOM.presetSelect.addEventListener('change', (e) => {
+                const idx = e.target.value;
+                if (idx !== '') {
+                    DOM.nameInput.value = appState.presets[idx].members;
+                    updateInputValidation();
+                }
+            });
+
+            DOM.btnDeletePreset.addEventListener('click', () => {
+                const idx = DOM.presetSelect.value;
+                if (idx === '') return;
+                deletePreset(idx);
+            });
+
+            // Number Input
+            DOM.numStart.addEventListener('input', updateInputValidation);
+            DOM.numEnd.addEventListener('input', updateInputValidation);
+
+            // Winner Count
+            DOM.btnWinnersMinus.addEventListener('click', () => { if (appState.phase === 'setup') adjustWinners(-1); });
+            DOM.btnWinnersPlus.addEventListener('click', () => { if (appState.phase === 'setup') adjustWinners(1); });
+            DOM.winnersCount.addEventListener('change', () => {
+                if (appState.phase !== 'setup') return;
+                let val = parseInt(DOM.winnersCount.value, 10);
+                if (isNaN(val) || val < 1) val = 1;
+                appState.winnerCount = val;
+                updateWinnerLimits(); // Re-clamp if exceeding max allowed
+                DOM.winnersCount.value = appState.winnerCount;
+            });
+            DOM.excludeWinners.addEventListener('change', (e) => {
+                appState.excludeWinners = e.target.checked;
+                updateWinnerLimits();
+                updateInputValidation();
+            });
+
+            // Start Button
+            DOM.btnStart.addEventListener('click', startSequence);
+
+            // Result Actions
+            const btnCopyResult = document.getElementById('btnCopyResult');
+            const btnRedraw = document.getElementById('btnRedraw');
+            const btnReset = document.getElementById('btnReset');
+
+            btnCopyResult.addEventListener('click', () => {
+                const text = appState.winners.map(w => `${w.orderStr} : ${w.text}`).join('\n');
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('결과가 클립보드에 복사되었습니다.');
+                }).catch(err => {
+                    console.error('Copy failed', err);
+                    alert('복사에 실패했습니다.');
+                });
+            });
+
+            btnRedraw.addEventListener('click', () => {
+                document.getElementById('resultModal').classList.remove('show');
+                appState.phase = 'setup';
+                appState.winners = [];
+                appState.currentRound = 0;
+                DOM.btnStart.textContent = "추첨 시작!";
+
+                // Re-enable inputs
+                DOM.modeBtns.forEach(b => b.disabled = false);
+                DOM.nameInput.disabled = false;
+                DOM.numStart.disabled = false;
+                DOM.numEnd.disabled = false;
+                DOM.btnWinnersMinus.disabled = false;
+                DOM.btnWinnersPlus.disabled = false;
+                DOM.excludeWinners.disabled = false;
+                DOM.btnStart.disabled = false;
+
+                DOM.slotsRow.innerHTML = ''; // clear slots
+                populateBalls(appState.participants); // fill drum again
+            });
+
+            btnReset.addEventListener('click', () => {
+                // Return to initial state entirely
+                location.reload();
+            });
+        }
+
+        function loadPresets() {
+            try {
+                const loaded = localStorage.getItem('luckyball_presets');
+                appState.presets = loaded ? JSON.parse(loaded) : [];
+            } catch (e) {
+                appState.presets = [];
+            }
+            renderPresets();
+        }
+
+        function savePreset(name, members) {
+            appState.presets.push({ name, members });
+            localStorage.setItem('luckyball_presets', JSON.stringify(appState.presets));
+            renderPresets();
+            // Automatically select the newly added preset
+            DOM.presetSelect.value = appState.presets.length - 1;
+        }
+
+        function deletePreset(index) {
+            appState.presets.splice(index, 1);
+            localStorage.setItem('luckyball_presets', JSON.stringify(appState.presets));
+            renderPresets();
+            DOM.nameInput.value = '';
+            updateInputValidation();
+        }
+
+        function renderPresets() {
+            DOM.presetSelect.innerHTML = '';
+            if (appState.presets.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '저장된 프리셋이 없습니다';
+                DOM.presetSelect.appendChild(opt);
+                DOM.btnDeletePreset.disabled = true;
+            } else {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '프리셋을 선택하세요...';
+                DOM.presetSelect.appendChild(opt);
+
+                appState.presets.forEach((p, i) => {
+                    const o = document.createElement('option');
+                    o.value = i;
+                    o.textContent = p.name;
+                    DOM.presetSelect.appendChild(o);
+                });
+                DOM.btnDeletePreset.disabled = false;
+            }
+        }
+
+        function setMode(mode) {
+            appState.mode = mode;
+            DOM.modeSwitch.dataset.mode = mode;
+
+            DOM.modeBtns.forEach(b => b.classList.toggle('active', b.dataset.target === mode));
+
+            if (mode === 'name') {
+                DOM.sectionName.classList.remove('hidden');
+                DOM.sectionNumber.classList.add('hidden');
+            } else {
+                DOM.sectionName.classList.add('hidden');
+                DOM.sectionNumber.classList.remove('hidden');
+            }
+            updateInputValidation();
+        }
+
+        function updateInputValidation() {
+            let isValid = false;
+            let currentParticipants = [];
+
+            if (appState.mode === 'name') {
+                const text = DOM.nameInput.value;
+                appState.nameInput = text;
+
+                // Parse by comma or newline
+                const rawNames = text.split(/,|\n/).map(s => s.trim()).filter(s => s.length > 0);
+
+                DOM.participantCount.textContent = rawNames.length;
+                renderTags(rawNames);
+
+                currentParticipants = rawNames.map((name, i) => ({
+                    id: `p_${i}`,
+                    text: name,
+                    color: BALL_COLORS[i % BALL_COLORS.length]
+                }));
+
+                isValid = currentParticipants.length > 0;
+            } else {
+                const start = parseInt(DOM.numStart.value);
+                const end = parseInt(DOM.numEnd.value);
+
+                if (isNaN(start) || isNaN(end)) {
+                    DOM.numberSummary.textContent = "올바른 숫자를 입력하세요.";
+                    DOM.numberSummary.style.color = "var(--btn-danger)";
+                    isValid = false;
+                } else {
+                    appState.numberRange = { start, end };
+                    let count = end - start + 1;
+
+                    if (start >= end) {
+                        DOM.numberSummary.textContent = "시작 숫자는 끝 숫자보다 작아야 합니다.";
+                        DOM.numberSummary.style.color = "var(--btn-danger)";
+                        isValid = false;
+                    } else if (count > 200) {
+                        DOM.numberSummary.textContent = `최대 200개까지만 가능합니다. (현재 ${count}개)`;
+                        DOM.numberSummary.style.color = "var(--btn-danger)";
+                        isValid = false;
+                    } else {
+                        DOM.numberSummary.textContent = `${start} ~ ${end} (총 ${count}개)`;
+                        DOM.numberSummary.style.color = "var(--text-muted)";
+
+                        for (let i = start; i <= end; i++) {
+                            currentParticipants.push({
+                                id: `n_${i}`,
+                                text: String(i),
+                                color: BALL_COLORS[(i - start) % BALL_COLORS.length]
+                            });
+                        }
+                        isValid = true;
+                    }
+                }
+            }
+
+            appState.participants = currentParticipants;
+            updateWinnerLimits();
+
+            if (!isValid || appState.participants.length === 0) {
+                DOM.btnStart.disabled = true;
+                DOM.btnStart.textContent = "참가자를 입력하세요";
+            } else if (appState.winnerCount > appState.participants.length && appState.excludeWinners) {
+                DOM.btnStart.disabled = true;
+                DOM.btnStart.textContent = "당첨자 수가 너무 많습니다";
+            } else {
+                DOM.btnStart.disabled = false;
+                DOM.btnStart.textContent = "추첨 시작!";
+            }
+        }
+
+        function renderTags(names) {
+            DOM.tagsPreview.innerHTML = '';
+            // Render up to 50 tags to avoid UI freeze if pasting too many
+            const displayNames = names.slice(0, 50);
+            displayNames.forEach(name => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.textContent = name;
+                DOM.tagsPreview.appendChild(span);
+            });
+            if (names.length > 50) {
+                const more = document.createElement('span');
+                more.className = 'tag';
+                more.style.borderColor = 'transparent';
+                more.textContent = `...외 ${names.length - 50}명`;
+                DOM.tagsPreview.appendChild(more);
+            }
+        }
+
+        function adjustWinners(delta) {
+            let newVal = appState.winnerCount + delta;
+            if (newVal < 1) newVal = 1;
+
+            appState.winnerCount = newVal;
+            DOM.winnersCount.value = newVal;
+            updateWinnerLimits();
+            updateInputValidation();
+        }
+
+        function updateWinnerLimits() {
+            const max = appState.participants.length;
+
+            if (appState.excludeWinners && appState.winnerCount > max && max > 0) {
+                appState.winnerCount = max;
+                DOM.winnersCount.value = appState.winnerCount;
+            }
+
+            if (appState.winnerCount > 1) {
+                DOM.excludeToggleContainer.classList.remove('hidden');
+                DOM.excludeDesc.textContent = appState.excludeWinners
+                    ? "같은 사람이 중복 당첨되지 않습니다."
+                    : "같은 사람이 여러 번 당첨될 수 있습니다.";
+            } else {
+                DOM.excludeToggleContainer.classList.add('hidden');
+            }
+        }
+
+        // --- Confetti System ---
+        const confettiCanvas = document.getElementById('confettiCanvas');
+        const cCtx = confettiCanvas.getContext('2d');
+        let confettis = [];
+
+        function resizeConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfetti);
+        resizeConfetti();
+
+        class Confetti {
+            constructor() {
+                this.x = window.innerWidth / 2 + (Math.random() - 0.5) * 200;
+                this.y = window.innerHeight / 2 - 100 + (Math.random() - 0.5) * 100;
+                this.vx = (Math.random() - 0.5) * 20;
+                this.vy = (Math.random() - 1) * 20 - 5;
+                this.size = Math.random() * 8 + 6;
+                this.color = BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)];
+                this.rot = Math.random() * 360;
+                this.rotSpeed = (Math.random() - 0.5) * 15;
+            }
+            update() {
+                this.vy += 0.4; // Gravity
+                this.vx *= 0.98; // Air friction
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rot += this.rotSpeed;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rot * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function fireConfetti() {
+            for (let i = 0; i < 150; i++) confettis.push(new Confetti());
+        }
+
+        function renderConfetti() {
+            cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            for (let i = confettis.length - 1; i >= 0; i--) {
+                const c = confettis[i];
+                c.update();
+                c.draw(cCtx);
+                if (c.y > window.innerHeight + 50) confettis.splice(i, 1);
+            }
+            requestAnimationFrame(renderConfetti);
+        }
+        renderConfetti(); // Start loop initially
+
+        // --- Sequence & Flow Control ---
+        function startSequence() {
+            if (appState.participants.length === 0) return;
+
+            // Ensure audio ctx is ready on start
+            initAudio();
+
+            if (appState.phase === 'setup' || appState.phase === 'result') {
+                appState.phase = 'setup';
+                appState.winners = [];
+                appState.currentRound = 0;
+
+                // Disable UI inputs
+                DOM.modeBtns.forEach(b => b.disabled = true);
+                DOM.nameInput.disabled = true;
+                DOM.numStart.disabled = true;
+                DOM.numEnd.disabled = true;
+                DOM.btnWinnersMinus.disabled = true;
+                DOM.btnWinnersPlus.disabled = true;
+                DOM.excludeWinners.disabled = true;
+                DOM.btnStart.disabled = true;
+                DOM.btnStart.style.opacity = '0.5';
+                DOM.btnStart.style.cursor = 'not-allowed';
+
+                // Prepare Slots
+                DOM.slotsRow.innerHTML = '';
+                for (let i = 0; i < appState.winnerCount; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'slot';
+                    slot.id = `slot-${i}`;
+                    const order = document.createElement('span');
+                    order.className = 'slot-order';
+                    order.textContent = (i + 1) + (i === 0 ? 'st' : i === 1 ? 'nd' : i === 2 ? 'rd' : 'th');
+                    slot.appendChild(order);
+                    const qMark = document.createElement('span');
+                    qMark.textContent = '?';
+                    slot.appendChild(qMark);
+                    DOM.slotsRow.appendChild(slot);
+                }
+
+                // Initialize Balls
+                populateBalls(appState.participants);
+            }
+
+            if (appState.drawType === 'order') {
+                appState.winnerCount = appState.participants.length;
+                runOrderSequence();
+            } else {
+                runNextDraw();
+            }
+        }
+
+        function runOrderSequence() {
+            appState.phase = 'mixing';
+            DOM.btnStart.textContent = `순서 섞는 중...`;
+
+            setTimeout(() => {
+                appState.phase = 'extracting';
+                DOM.btnStart.textContent = `순서 배정 중...`;
+
+                let delay = 0;
+                // Shuffle balls array visually
+                const shuffledBalls = [...appState.balls].sort(() => Math.random() - 0.5);
+
+                // Calculate stagger step (max 2 seconds total for all balls to shoot)
+                const stagger = Math.max(30, Math.min(100, 2000 / shuffledBalls.length));
+
+                shuffledBalls.forEach((ball, idx) => {
+                    setTimeout(() => {
+                        // Shoot out
+                        ball.isShootingOut = true;
+                        const angle = Math.PI * 1.5 + (Math.random() * 0.6 - 0.3) * Math.PI; // Upwards spread
+                        const speed = Math.random() * 15 + 25; // Speed between 25 and 40
+                        ball.vx = Math.cos(angle) * speed;
+                        ball.vy = Math.sin(angle) * speed - 10;
+
+                        playSound('tick');
+
+                        const numth = idx + 1;
+                        appState.winners.push({ text: ball.text, color: ball.color, order: numth, orderStr: `${numth}번`, originalId: ball.id });
+
+                        if (idx === shuffledBalls.length - 1) {
+                            setTimeout(() => {
+                                finishSequence();
+                            }, 1500);
+                        }
+                    }, delay);
+                    delay += stagger;
+                });
+
+            }, 2000); // initial mixing time
+        }
+
+        function runNextDraw() {
+            if (appState.winners.length >= appState.winnerCount) {
+                finishSequence();
+                return;
+            }
+
+            // 1. Start Mixing
+            appState.phase = 'mixing';
+            DOM.btnStart.textContent = `추첨 진행 중... (${appState.winners.length + 1} / ${appState.winnerCount})`;
+
+            // Mix for time. First draw takes longer to build suspense.
+            const isFirstDraw = appState.winners.length === 0;
+            const mixDuration = isFirstDraw ? 3000 : 750; // Wait slightly longer than before for subsequent draws (750ms)
+
+            setTimeout(() => {
+                extractWinner();
+            }, mixDuration);
+        }
+
+        function extractWinner() {
+            appState.phase = 'extracting'; // Damping physics
+
+            setTimeout(() => {
+                // Find eligible ball
+                const availableBalls = appState.balls.filter(b => !b.isExtracted);
+                if (availableBalls.length === 0) {
+                    finishSequence();
+                    return;
+                }
+
+                // Select Random
+                const winIdx = Math.floor(Math.random() * availableBalls.length);
+                const winnerBall = availableBalls[winIdx];
+                winnerBall.isExtracted = true;
+
+                // UI extraction animation
+                showExtractedBall(winnerBall);
+
+            }, 250); // Shorter wait for ball to jump up 
+        }
+
+        function showExtractedBall(ball) {
+            playSound('fanfare');
+            fireConfetti();
+
+            const overlay = document.getElementById('extract-overlay');
+            const extractEl = document.getElementById('extractedBall');
+
+            overlay.classList.add('active');
+            // Format Text with line breaks for DOM element if > 5 chars
+            let pText = ball.text;
+            if (pText.length > 5) {
+                const mid = Math.floor(pText.length / 2);
+                pText = pText.substring(0, mid) + '<br>' + pText.substring(mid);
+            }
+            extractEl.innerHTML = pText;
+
+            // Scale text dynamically
+            let fSize = 2.5;
+            if (ball.text.length > 3) fSize = 1.8;
+            if (ball.text.length > 5) fSize = 1.5;
+            extractEl.style.fontSize = `${fSize}rem`;
+
+            // Build Gradient dynamically
+            extractEl.style.background = `radial-gradient(circle at 30% 30%, #ffffff 0%, ${ball.color} 50%, #000000 100%)`;
+            extractEl.style.color = '#fff';
+            extractEl.style.textShadow = '0 2px 4px rgba(0,0,0,0.5)';
+            extractEl.classList.add('show');
+
+            const numth = appState.winners.length + 1;
+            const orderSuffix = numth === 1 ? 'st' : numth === 2 ? 'nd' : numth === 3 ? 'rd' : 'th';
+
+            // Save winner state
+            const winObj = { text: ball.text, color: ball.color, order: numth, orderStr: `${numth}${orderSuffix}`, originalId: ball.id };
+            appState.winners.push(winObj);
+
+            setTimeout(() => {
+                overlay.classList.remove('active');
+                extractEl.classList.remove('show');
+
+                fillSlot(winObj);
+
+                // Exclude ?
+                if (appState.excludeWinners) {
+                    appState.balls = appState.balls.filter(b => b.id !== ball.id);
+                }
+
+                // Next draw
+                setTimeout(() => {
+                    runNextDraw();
+                }, 400); // Give users a brief moment before fetching the next
+
+            }, 800); // Show popup ball longer (was 625, now 800 = ~120% delay)
+        }
+
+        function fillSlot(winObj) {
+            const slot = document.getElementById(`slot-${winObj.order - 1}`);
+            if (slot) {
+                slot.classList.add('filled');
+                slot.style.background = `radial-gradient(circle at 30% 30%, #ffffff 0%, ${winObj.color} 50%, #000000 100%)`;
+                slot.style.color = '#fff';
+                slot.style.textShadow = '0 1px 2px rgba(0,0,0,0.8)';
+
+                let fSize = 1;
+                if (winObj.text.length > 3) fSize = 0.8;
+                if (winObj.text.length > 5) fSize = 0.6;
+
+                slot.innerHTML = `<span class="slot-order">${winObj.orderStr}</span><span style="font-size:${fSize}rem">${winObj.text}</span>`;
+            }
+        }
+
+        function finishSequence() {
+            appState.phase = 'result';
+            playSound('grand');
+            fireConfetti();
+            setTimeout(fireConfetti, 500);
+
+            DOM.btnStart.textContent = "추첨 완료!";
+            DOM.btnStart.style.opacity = '1';
+            DOM.btnStart.style.cursor = 'pointer';
+
+            // Add to history
+            const record = {
+                timestamp: new Date(),
+                winners: [...appState.winners]
+            };
+            appState.history.unshift(record); // Add to front
+            if (appState.history.length > 10) appState.history.pop();
+            renderHistory();
+
+            // Render Result Modal
+            setTimeout(() => {
+                showResultModal();
+            }, 1000);
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            if (appState.history.length === 0) {
+                historyList.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">아직 추첨 기록이 없습니다.</span>`;
+                return;
+            }
+
+            appState.history.forEach((h, idx) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+
+                const timeStr = h.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const names = h.winners.map(w => w.text).join(', ');
+                const displayNames = names.length > 20 ? names.substring(0, 20) + '...' : names;
+
+                item.innerHTML = `
+                    <span style="font-weight:bold; color:var(--accent-cyan);">${appState.history.length - idx}회차</span>
+                    <span class="history-time">${timeStr}</span>
+                    <span style="font-size:0.9rem; max-width:150px; overflow:hidden; text-overflow:ellipsis;" title="${names}">${displayNames}</span>
+                `;
+                historyList.appendChild(item);
+            });
+        }
+
+        function showResultModal() {
+            const modal = document.getElementById('resultModal');
+            const list = document.getElementById('finalResultList');
+            const title = modal.querySelector('.modal-title');
+
+            list.innerHTML = '';
+
+            if (appState.drawType === 'order') {
+                title.textContent = "📊 순서 배정 결과";
+                list.style.display = 'block'; // Ensure it's not grid
+
+                const table = document.createElement('table');
+                table.className = 'order-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">순서</th>
+                            <th>이름 / 번호</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${appState.winners.map(w => `
+                            <tr>
+                                <td><strong style="color:var(--accent-gold);">${w.orderStr}</strong></td>
+                                <td style="text-align:left; padding-left: 20px;">
+                                    <div style="display:inline-block; width:15px; height:15px; border-radius:50%; background:${w.color}; box-shadow:0 0 5px ${w.color}; margin-right:8px; vertical-align:middle;"></div>
+                                    <span style="font-weight:bold;">${w.text}</span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                list.appendChild(table);
+            } else {
+                title.textContent = "🎉 추첨 완료! 🎉";
+                list.style.display = 'grid'; // Revert to grid
+
+                appState.winners.forEach(w => {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `
+                        <div class="result-color" style="background:${w.color}; box-shadow:0 0 10px ${w.color};"></div>
+                        <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                            <span style="font-size:0.7rem; color:var(--text-muted);">${w.orderStr}</span>
+                            <span class="result-name">${w.text}</span>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            modal.classList.add('show');
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+
+</html>
